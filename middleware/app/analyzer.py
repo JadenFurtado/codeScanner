@@ -50,4 +50,13 @@ def stopAnalysis():
 
 @app.route("/getAnalysis")
 def getAnalysis():
-    pass
+    containerId = request.args.get("containerId")
+    resultDirectory = request.args.get("resultDirectory")
+    try:
+        cmd = "docker cp "+containerId+":/scan "+resultDirectory
+        cmdList = cmd.split()
+        p = subprocess.Popen(cmdList, cwd=working_directory,stdout=PIPE)
+        p.wait()
+        return "success"
+    except:
+        return "an error occurred"
