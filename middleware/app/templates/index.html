@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    Path to code <input type="text" name="repository_path" id="pathToCode">
+    <button id="analyze">Analyze</button>
+    <script>
+        $("#analyze").click(function(){
+            var working_directory = $("#pathToCode").val();
+            $.ajax({
+                url:"http://127.0.0.1:5000/analyze",
+                data:{"working_directory":working_directory},
+                type:"GET",
+                success:function(data){
+                    console.log(data);
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
