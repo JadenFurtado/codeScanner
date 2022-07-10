@@ -7,6 +7,7 @@ import subprocess
 from subprocess import PIPE
 import json
 import docker
+import mysql.connector
 
 # the analysis page
 @app.route("/analysis")
@@ -15,18 +16,30 @@ def analysisOPtions():
 
 @app.route("/startAnalysis")
 def analyze():
+    scan_name = request.args.get("scan_name")
     working_directory = request.args.get("working_directory")
-    if working_directory!=None:
+    if working_directory!=None or scan_name!=None:
         print(working_directory[0])
-        cmd = "docker run --name testin -v "+str(working_directory)+":/project ort --info analyze -i /project -o /scan"
+        cmd = "docker run --name "+scan_name+" -v "+str(working_directory)+":/project ort --info analyze -i /project -o /scan"
         cmdList = cmd.split()
-        p = subprocess.Popen(cmdList, cwd=working_directory,stdout=PIPE)
-        p.wait()
-        text = p.communicate()[0]
-        print(text)
-        return "success"
+        try:
+            mydb = mysql.connector.connect(host = app.config['DB_HOST'],user=app.config['DB_USERNAME'],password=app.config['DB_PASSWORD'],database=app.config['DB_NAME']) 
+            mycursor = mydb.cursor()
+            p = subprocess.Popen(cmdList, cwd=working_directory,stdout=PIPE)
+            p.wait()
+            text = p.communicate()[0]
+            print(text)
+            sql = "INSERT INTO analysis(containerId,scanPath) VALUES(%s,%s)"
+            val = (scan_name,working_directory)
+            mycursor.execute(sql,val)
+            print(mycursor)
+            mydb.commit()
+            mydb.close()
+            return "success"
+        except:
+            return "an exception occurred"
     else:
-        return "working_directory can't be null!"
+        return "working directory and scan name can't be null!"
 
 @app.route("/listAnalysis")
 def listAnalysis():
@@ -43,6 +56,20 @@ def listAnalysis():
         containerStatus['status'] = cont.attrs['State']['Status']
         listContainer.append(containerStatus)
     return json.dumps(listContainer)
+
+@app.route("/showAllAnalysis")
+def showAllAnalysis():
+    try:
+        mydb = mysql.connector.connect(host = app.config['DB_HOST'],user=app.config['DB_USERNAME'],password=app.config['DB_PASSWORD'],database=app.config['DB_NAME']) 
+        mycursor = mydb.cursor()
+        sql = "SELECT * FROM analysis"
+        mycursor.execute(sql)
+        myres = mycursor.fetchall()
+        mydb.commit()
+        mydb.close()
+        return str(myres)
+    except:
+        return "an exception occurred"
 
 @app.route("/stopAnalysis")
 def stopAnalysis():
