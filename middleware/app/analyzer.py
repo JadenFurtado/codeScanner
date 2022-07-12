@@ -1,7 +1,7 @@
 # the analysis module of the scanner
 
 from app import app
-from flask import Flask
+from flask import Flask, make_response,jsonify
 from flask import request,render_template
 import subprocess
 from subprocess import PIPE
@@ -13,6 +13,10 @@ import mysql.connector
 @app.route("/analysis")
 def analysisOPtions():
     return render_template("index.html")
+
+@app.route("/analysis/list/all")
+def analysisListAll():
+    return render_template("getAnalysis.html")
 
 @app.route("/startAnalysis")
 def analyze():
@@ -41,7 +45,7 @@ def analyze():
     else:
         return "working directory and scan name can't be null!"
 
-@app.route("/listAnalysis")
+""" @app.route("/listAnalysis")
 def listAnalysis():
     client = docker.from_env()
     f = open ('/home/jadenfurtado/Desktop/repoScanner/middleware/app/containers.json', "r")  
@@ -55,7 +59,7 @@ def listAnalysis():
         containerStatus['conainterId'] = c['containerId']
         containerStatus['status'] = cont.attrs['State']['Status']
         listContainer.append(containerStatus)
-    return json.dumps(listContainer)
+    return json.dumps(listContainer) """
 
 @app.route("/showAllAnalysis")
 def showAllAnalysis():
@@ -65,9 +69,17 @@ def showAllAnalysis():
         sql = "SELECT * FROM analysis"
         mycursor.execute(sql)
         myres = mycursor.fetchall()
+        rows = list()
+        for row in myres:
+            newRow = dict()
+            newRow["id"] = row[0]
+            newRow["name"] = row[1]
+            newRow["path"] = row[2]
+            rows.append(newRow)
         mydb.commit()
         mydb.close()
-        return str(myres)
+        resp = make_response(jsonify(rows))
+        return resp
     except:
         return "an exception occurred"
 
@@ -75,15 +87,28 @@ def showAllAnalysis():
 def stopAnalysis():
     pass
 
-@app.route("/getAnalysis")
+@app.route("/saveAnalysis")
 def getAnalysis():
-    containerId = request.args.get("containerId")
+    testName = request.args.get("testName")
     resultDirectory = request.args.get("resultDirectory")
+    if testName==None or resultDirectory==None:
+        return "testName or result Directory cannot be null"
     try:
-        cmd = "docker cp "+containerId+":/scan "+resultDirectory
+        cmd = 'docker ps -aqf name=^'+testName+'$'
+        cmdList = cmd.split()
+        working_directory = resultDirectory
+        p = subprocess.Popen(cmdList, cwd=working_directory,stdout=PIPE)
+        p.wait()
+        containerId = str(p.communicate()[0],"UTF-8")
+        cmd = "docker cp "+containerId.strip()+":/scan "+resultDirectory
+        print(cmd)
         cmdList = cmd.split()
         p = subprocess.Popen(cmdList, cwd=working_directory,stdout=PIPE)
         p.wait()
         return "success"
     except:
         return "an error occurred"
+
+@app.route("/fetchAnalysis")
+def fetchAnalysis():
+    return render_template("testFetchAnalysis.html")

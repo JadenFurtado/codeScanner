@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <table id="data">
+        
+    </table>
+    testName:
+    <div id="testName"></div>
+    localPath:
+    <input type="text" id="localPath">
+    <button id="save">Save</button>
+    <table id="myTable">
+    </table>
+<script>
+    var rows;
+    var x = document.getElementById("data");
+    function displayFullName() {
+    // Creating the XMLHttpRequest object
+    var request = new XMLHttpRequest();
+
+    // Instantiating the request object
+    request.open("GET", "http://127.0.0.1:5000/showAllAnalysis");
+
+    // Defining event listener for readystatechange event
+    request.onreadystatechange = function() {
+        // Check if the request is compete and was successful
+        if(this.readyState === 4 && this.status === 200) {
+            // Inserting the response from server into an HTML element
+            document.getElementById("data").innerHTML = this.responseText;
+            rows=JSON.parse(this.responseText);
+            for(row in rows){
+                var newRow=document.getElementById('myTable').insertRow();
+                newRow.innerHTML = "<td>id="+rows[row]['id']+"</td><td>"+rows[row]['name']+"</td><td><button id='test_"+rows[row]['id']+"'>report</button></td>";
+            }
+        }
+    };
+    // Sending the request to the server
+    request.send();
+}
+displayFullName();
+</script>
+</body>
+</html>

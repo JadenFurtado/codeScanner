@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    Destination path:<input type="text" id="destinationPath">
+    <br>
+    Test Name: <input type="text" name="" id="testName">
+    <br>
+    <button id="save">Save</button>
+    <script>
+        $("#save").click(function(){
+            var destinationPath = $("#destinationPath").val();
+            var testName = $("#testName").val();
+            $.ajax({
+                url:"http://127.0.0.1:5000/saveAnalysis?testName="+testName+"&resultDirectory="+destinationPath,
+                success:function(data){
+                    console.log(data);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
